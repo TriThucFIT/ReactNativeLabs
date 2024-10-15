@@ -1,14 +1,20 @@
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import React, { useState } from "react";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import Feather from "@expo/vector-icons/Feather";
+import { TaskApi } from "../api/taskList.api";
 
-export const Item_ListView = ({ navigation, item }) => {
-  const [toggleCheckBox, setToggleCheckBox] = useState(item.status === "done");
-  false;
-
+const taskListAPI = new TaskApi();
+export const Item_ListView = ({ navigation, item, onDelete }) => {
+  const [toggleCheckBox, setToggleCheckBox] = useState(item.status);
   const handleCheckBox = () => {
     setToggleCheckBox(!toggleCheckBox);
-    item.status = toggleCheckBox ? "done" : "in-process";
+    item.status = toggleCheckBox;
+    taskListAPI.updateTask(item);
+  };
+  const handleDelete = () => {
+    taskListAPI.deleteTask(item);
+    onDelete((prev) => prev.filter((task) => task.id !== item.id));
   };
   return (
     <View style={styles.container}>
@@ -31,13 +37,20 @@ export const Item_ListView = ({ navigation, item }) => {
           {item.name}
         </Text>
         <View style={styles.info}>
-          <Text style={styles.textInfo}>Time : {item.time}</Text>
-          <Text style={styles.textInfo}>Status : {item.status}</Text>
+          <Text style={styles.textInfo}>
+            Time : {new Date(item.time).toLocaleDateString()}
+          </Text>
+          <Text style={styles.textInfo}>
+            Status : {item.status ? "Done" : "In-Process"}
+          </Text>
         </View>
       </View>
       <View style={styles.edit}>
         <Pressable onPress={() => navigation.navigate("TaskHandle", { item })}>
-          <AntDesign name="edit" size={24} color="red" />
+          <AntDesign name="edit" size={24} color="orange" />
+        </Pressable>
+        <Pressable onPress={handleDelete}>
+          <Feather name="delete" size={20} color="red" />
         </Pressable>
       </View>
     </View>
@@ -76,7 +89,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   info: {
-    flexDirection: "row",
+    flexDirection: "column",
     justifyContent: "space-between",
   },
   textInfo: {
@@ -88,7 +101,8 @@ const styles = StyleSheet.create({
 
   edit: {
     width: 50,
-    justifyContent: "center",
+    height: 80,
+    justifyContent: "space-between",
     alignItems: "center",
   },
 });

@@ -1,14 +1,18 @@
 import { StyleSheet, View, FlatList, TextInput, Pressable } from "react-native";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Card_Info } from "../components/Card_Info";
 import { Item_ListView } from "../components/Item_ListView";
 import { TaskApi } from "../api/taskList.api";
+import { ActivityIndicator } from "react-native";
+import removeAccents from 'remove-accents';  
 
 export const HomePage = ({ navigation, route }) => {
   const name = route.params?.name;
   const [tasks, setTasks] = useState([]);
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(false);
+  const orinalTasks = useRef(tasks);
   useEffect(() => {
     navigation.setOptions({
       headerTitle: "",
@@ -26,13 +30,30 @@ export const HomePage = ({ navigation, route }) => {
   }, [navigation]);
 
   useEffect(() => {
-    const taskAPI = new TaskApi();
-    taskAPI.getTaskList().then((res) => {
-      console.log(res);
+    const fetchTasks = async () => {
+      setLoading(true);
+      const taskAPI = new TaskApi();
+      const data = await taskAPI.getTaskList();
+      setLoading(false);
+      setTasks(data);
+      orinalTasks.current = data;
+    };
+    const unsubscribe = navigation.addListener("focus", fetchTasks);
 
-      setTasks(res);
+    return unsubscribe;
+  }, [navigation, search]);
+
+  useEffect(() => {
+    setTasks(() => {
+      if (search === "") {
+        return orinalTasks.current;
+      }
+      const searchQuery = removeAccents(search.toLowerCase());
+      return orinalTasks.current.filter((task) =>
+        removeAccents(task.name.toLowerCase()).includes(searchQuery)
+      );
     });
-  }, [navigation]);
+  }, [search]);
 
   return (
     <View style={styles.container}>
@@ -45,13 +66,22 @@ export const HomePage = ({ navigation, route }) => {
           onChangeText={(text) => setSearch(text)}
         />
       </View>
-      <FlatList
-        data={tasks}
-        renderItem={({ item }) => (
-          <Item_ListView item={item} navigation={navigation} />
-        )}
-        keyExtractor={(item) => item.id}
-      />
+      {loading ? (
+        <ActivityIndicator size="large" color="#0000ff" />
+      ) : (
+        <FlatList
+          data={tasks}
+          renderItem={({ item }) => (
+            <Item_ListView
+              key={item.id}
+              item={item}
+              navigation={navigation}
+              onDelete={setTasks}
+            />
+          )}
+          keyExtractor={(item) => item.id}
+        />
+      )}
       <View style={{ height: 100 }}>
         <Pressable
           style={styles.addTask}

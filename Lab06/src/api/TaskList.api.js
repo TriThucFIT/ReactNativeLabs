@@ -1,25 +1,20 @@
 export class TaskApi {
   constructor() {}
   async getTaskList() {
-    return fetch(
-      "https://66f37c8771c84d805878db7b.mockapi.io/api/rn/product_grid"
-    )
+    return fetch("https://66f37c8771c84d805878db7b.mockapi.io/Review_labs")
       .then((response) => response.json())
 
       .then((json) => json);
   }
 
   async createTask(task) {
-    return fetch(
-      "https://66f37c8771c84d805878db7b.mockapi.io/api/rn/product_grid",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(task),
-      }
-    )
+    return fetch("https://66f37c8771c84d805878db7b.mockapi.io/Review_labs", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(task),
+    })
       .then((response) => response.json())
       .then((data) => console.log("Create Success:", data))
       .catch((error) => {
@@ -28,9 +23,8 @@ export class TaskApi {
   }
 
   async updateTask(task) {
-    console.log("Update Task", task.id);
     return fetch(
-      `https://66f37c8771c84d805878db7b.mockapi.io/api/rn/product_grid?id=${task.id}`,
+      `https://66f37c8771c84d805878db7b.mockapi.io/Review_labs/${task.id}`,
       {
         method: "PUT",
         headers: {
@@ -41,6 +35,20 @@ export class TaskApi {
     )
       .then((response) => response.json())
       .then((data) => console.log("Update Success:", data))
+      .catch((error) => {
+        console.error("Error:", error);
+      });
+  }
+
+  async deleteTask(task) {
+    return fetch(
+      `https://66f37c8771c84d805878db7b.mockapi.io/Review_labs/${task.id}`,
+      {
+        method: "DELETE",
+      }
+    )
+      .then((response) => response.json())
+      .then((data) => console.log("Delete Success:", data))
       .catch((error) => {
         console.error("Error:", error);
       });

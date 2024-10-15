@@ -12,12 +12,17 @@ import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { TaskApi } from "../api/taskList.api";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { ActivityIndicator } from "react-native";
 
 const TaskHandle = ({ navigation, route }) => {
   const item = route.params?.item;
   const name = route.params?.name;
   const [taskName, setTaskName] = useState(item ? item.name : "");
-  const [taskTime, setTime] = useState(item ? item.time : "");
+  const [taskTime, setTime] = useState(item ? new Date(item.time) : new Date());
+  const [mode, setMode] = useState("date");
+  const [show, setShow] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     navigation.setOptions({
@@ -37,16 +42,24 @@ const TaskHandle = ({ navigation, route }) => {
 
   const handleTaskProcess = async () => {
     const taskAPI = new TaskApi();
+    setLoading(true);
     if (item) {
       await taskAPI.updateTask({ ...item, name: taskName, time: taskTime });
     } else {
-      await taskAPI.addTaskList({
+      await taskAPI.createTask({
         name: taskName,
-        time: taskTime,
-        status: "in-process",
+        time: taskTime.getTime(),
+        status: false,
       });
     }
+    setLoading(false);
     navigation.navigate("Home");
+  };
+
+  const onChange = (event, selectedDate) => {
+    const currentDate = selectedDate;
+    setShow(false);
+    setTime(currentDate);
   };
 
   return (
@@ -73,16 +86,30 @@ const TaskHandle = ({ navigation, route }) => {
           <TextInput
             placeholder="Enter your task time"
             placeholderTextColor="gray"
+            onFocus={() => setShow(!show)}
+            value={taskTime.toISOString().split("T")[0]}
+            onPress={() => setShow(!show)}
             style={styles.input}
-            onChangeText={(text) => setTime(text)}
-            value={taskTime}
           />
+          {show && (
+            <DateTimePicker
+              testID="dateTimePicker"
+              value={taskTime}
+              mode={mode}
+              is24Hour={true}
+              onChange={onChange}
+            />
+          )}
         </View>
         <View style={styles.ButtonView}>
           <Pressable style={styles.button} onPress={() => handleTaskProcess()}>
-            <Text style={{ color: "white", fontSize: 24 }}>
-              Finish <AntDesign name="arrowright" size={24} color="white" />
-            </Text>
+            {loading ? (
+              <ActivityIndicator size="large" color="white" />
+            ) : (
+              <Text style={{ color: "white", fontSize: 24 }}>
+                Finish <AntDesign name="arrowright" size={24} color="white" />
+              </Text>
+            )}
           </Pressable>
         </View>
       </View>
